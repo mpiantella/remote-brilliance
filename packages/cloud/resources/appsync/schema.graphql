@@ -1,0 +1,476 @@
+
+schema {
+    query: Query
+    mutation: Mutation
+    subscription: Subscription
+}
+
+type Query {
+  # activity
+  getActivity(id: ID!): Activity
+  listActivities(
+    filter: TableActivityFilterInput
+    limit: Int
+    nextToken: String
+  ): ActivityConnection
+
+  # job
+  getJob(id: ID!): Job
+  listJobs(
+    filter: TableJobFilterInput
+    limit: Int
+    nextToken: String
+  ): JobConnection
+
+  # user
+  getUser(id: ID!): User
+  listUsers(
+    username: String
+    filter: TableUserFilterInput
+    limit: Int
+    nextToken: String
+  ): UserConnection
+
+  # subscriptions
+  # listSubscriptions(
+  #   filter: TableSubscriptionsFilterInput
+  #   limit: Int
+  #   nextToken: String
+  # ): SubscriptionConnection
+}
+
+type Mutation {
+  # activity
+  createActivity(input: CreateActivityInput!): Activity
+  updateActivity(input: UpdateActivityInput!): Activity
+  deleteActivity(input: DeleteActivityInput!): Activity
+  
+  # job
+  createJob(input: CreateJobInput!): Job
+  deleteJob(input: DeleteJobInput!): Job
+  updateJob(input: UpdateJobInput!): Job
+  
+  # user
+  createUser(input: CreateUserInput!): User
+  deleteUser(input: DeleteUserInput!): User
+  updateUser(input: UpdateUserInput!): User
+}
+# comment - nested
+type Comment {
+  title: String
+  content: String
+}
+
+# activity - main
+type Activity {
+  id: ID!
+  userId: String!
+  name: String!
+  description: String
+  content: String
+  status: ActivityStatus
+  date: String
+  comments: [Comment]
+}
+
+type ActivityConnection {
+  items: [Activity]
+  nextToken: String
+}
+
+## address - nested
+type Address {
+  address1: String!
+  address2: String
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String
+}
+
+# profileEvent - nested
+type ProfileEvent {
+  title: String!
+  content: String
+  area: String
+  startDate: String
+  endDate: String
+}
+
+# profile - nested
+type Profile {
+  currentRole: String!
+  summary: String
+  experience: [ProfileEvent]
+  education: [ProfileEvent]
+  licenses: [String]
+  certifications: [String]
+  recommendations: [String]
+  skills: [String]
+  endorsements: [String]
+}
+
+# job - main
+type Job {
+  id: ID!
+  userId: String!
+  title: String!
+  category: String!
+  type: String!
+  description: String
+  isFullyRemote: String
+  howtoApply: String
+  companyDescription: String
+  companyHQ: String
+  companyName: String
+  companyStatement: String
+  companyWebsiteURL: String
+  logo: String
+  startDate: String
+  endDate: String
+  applicants: [String] # userId array
+}
+
+type JobConnection {
+  items: [Job]
+  nextToken: String
+}
+
+# main - list of subscriptions
+type SubscriptionType {
+  id: ID!
+  name: String
+  description: String
+  frequency: SubscriptionFrequency
+  price: Float # maybe enum with sets prices
+}
+
+type SubscriptionTypeConnection {
+  items: [SubscriptionType]
+  nextToken: String
+}
+
+# billing - nested
+type Billing {
+  subscriptionId: String!
+  firstname: String!
+  lastname: String!
+  middlename: String
+  address: Address!
+  paymentmethod: String!
+  creditcard: String!
+  details: String
+}
+
+# subscription - nested
+type Subscription {
+  subscriptionsId: String!
+  userId: String!
+  billing: Billing
+  active: Boolean
+}
+
+# user - main
+type User {
+  id: ID!
+  cognitoid: ID!
+  address: Address!
+  email: String
+  username: String!
+  firstName: String
+  lastName: String
+  phone: String
+  registered: Boolean
+  subcribed: Boolean
+  profile: Profile
+  activities: [Activity] # changes to activity are updates here
+  applications: [String] # jobId array
+  subscription: Subscription # only job creators have this
+}
+
+type UserConnection {
+  items: [User]
+  nextToken: String
+}
+
+# Enumeration
+enum ActivityStatus {
+  open
+  closed
+}
+
+enum SubscriptionFrequency {
+  weekly
+  monthly
+  quarterly
+  yearly
+}
+
+# activity
+
+input InputActivity {
+  id: ID!
+  userId: String!
+  name: String!
+  description: String
+  content: String
+  status: String
+  date: String
+}
+
+input CreateActivityInput {
+  userId: String!
+  name: String!
+  description: String
+  content: String
+  status: String
+  date: String
+}
+
+input DeleteActivityInput {
+  id: ID!
+}
+
+input CommentInput {
+  body: String
+  title: String
+  userId: String
+}
+
+input UpdateActivityInput {
+  id: ID!
+  userId: String
+  name: String
+  description: String
+  content: String
+  status: String
+  date: String
+}
+
+# job
+input CreateJobInput {
+  title: String!
+  category: String!
+  type: String!
+  userId: String!
+  description: String
+  isFullyRemote: String
+  howtoApply: String
+  companyDescription: String
+  companyHQ: String
+  companyName: String
+  companyStatement: String
+  companyWebsiteURL: String
+  logo: String
+  startDate: String
+  endDate: String
+}
+
+input UpdateJobInput {
+  id: ID!
+  userId: String
+  title: String
+  description: String
+  category: String
+  type: String
+  isFullyRemote: String
+  howtoApply: String
+  companyDescription: String
+  companyHQ: String
+  companyName: String
+  companyStatement: String
+  companyWebsiteURL: String
+  logo: String
+  startDate: String
+  endDate: String
+  applicants: [String]
+}
+
+input DeleteJobInput {
+  id: ID!
+}
+
+# user
+input InputAddress {
+  address1: String!
+  address2: String
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String
+}
+
+input InputProfileEvent {
+  title: String
+  content: String
+  area: String
+  startDate: String
+  endDate: String
+  other: String
+}
+
+input InputProfile {
+  currentRole: String!
+  summary: String
+  experience: [InputProfileEvent]
+  education: [InputProfileEvent]
+  licenses: [InputProfileEvent]
+  certifications: [InputProfileEvent]
+  recommendations: [InputProfileEvent]
+  skills: [String]
+  endorsements: [String]
+}
+
+input InputComment {
+  title: String
+  content: String
+}
+
+input InputBilling {
+  subscriptionId: String!
+  firstname: String!
+  lastname: String!
+  middlename: String
+  address: InputAddress!
+  paymentmethod: String!
+  creditcard: String!
+  details: String
+}
+
+input InputSubscription {
+  subscriptionsId: String!
+  userId: String!
+  billing: InputBilling
+  active: Boolean
+}
+
+input CreateUserInput {
+  cognitoid: ID!
+  email: String
+  username: String!
+  firstName: String
+  lastName: String
+  phone: String
+  registered: Boolean
+  subcribed: Boolean
+  applications: [String]
+}
+
+input UpdateUserInput {
+  id: ID!
+  cognitoid: ID
+  email: String
+  username: String
+  firstName: String
+  lastName: String
+  phone: String
+  registered: Boolean
+  subcribed: Boolean
+  address: InputAddress
+  activities: [UpdateActivityInput]
+  applications: [String]
+  profile: InputProfile
+  subscription: InputSubscription
+}
+
+input DeleteUserInput {
+  id: ID!
+}
+
+# other
+input TableBooleanFilterInput {
+  eq: Boolean
+  ne: Boolean
+}
+
+input TableFloatFilterInput {
+  between: [Float]
+  contains: Float
+  eq: Float
+  ge: Float
+  gt: Float
+  le: Float
+  lt: Float
+  ne: Float
+  notContains: Float
+}
+
+input TableIDFilterInput {
+  beginsWith: ID
+  between: [ID]
+  contains: ID
+  eq: ID
+  ge: ID
+  gt: ID
+  le: ID
+  lt: ID
+  ne: ID
+  notContains: ID
+}
+
+input TableIntFilterInput {
+  between: [Int]
+  contains: Int
+  eq: Int
+  ge: Int
+  gt: Int
+  le: Int
+  lt: Int
+  ne: Int
+  notContains: Int
+}
+
+input TableStringFilterInput {
+  beginsWith: String
+  between: [String]
+  contains: String
+  eq: String
+  ge: String
+  gt: String
+  le: String
+  lt: String
+  ne: String
+  notContains: String
+}
+
+input TableActivityFilterInput {
+  id: TableIDFilterInput
+  userId: TableStringFilterInput
+  name: TableStringFilterInput
+  description: TableStringFilterInput
+  content: TableStringFilterInput
+  data: TableStringFilterInput
+  status: TableStringFilterInput
+}
+
+input TableJobFilterInput {
+  id: TableIDFilterInput
+  userId: TableStringFilterInput
+  title: TableStringFilterInput
+  description: TableStringFilterInput
+  category: TableStringFilterInput
+  type: TableStringFilterInput
+  isFullyRemote: TableStringFilterInput
+  howtoApply: TableStringFilterInput
+  companyDescription: TableStringFilterInput
+  companyHQ: TableStringFilterInput
+  companyName: TableStringFilterInput
+  companyStatement: TableStringFilterInput
+  companyWebsiteURL: TableStringFilterInput
+  logo: TableStringFilterInput
+  startDate: TableStringFilterInput
+  endDate: TableStringFilterInput
+  applicants: TableStringFilterInput
+}
+
+input TableUserFilterInput {
+  id: TableIDFilterInput
+  cognitoid: TableIDFilterInput
+  email: TableStringFilterInput
+  username: TableStringFilterInput
+  firstName: TableStringFilterInput
+  lastName: TableStringFilterInput
+  phone: TableStringFilterInput
+  registered: TableBooleanFilterInput
+  subcribed: TableBooleanFilterInput
+}

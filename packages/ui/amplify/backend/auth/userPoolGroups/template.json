@@ -1,0 +1,55 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "authremotebrillUserPoolId": {
+            "Type": "String",
+            "Default": "authremotebrillUserPoolId"
+        },
+        
+        "authremotebrillAppClientID": {
+            "Type": "String",
+            "Default": "authremotebrillAppClientID"
+        },
+        "authremotebrillAppClientIDWeb": {
+            "Type": "String",
+            "Default": "authremotebrillAppClientIDWeb"
+        },
+        "AuthRoleArn": {
+            "Type": "String"
+        },
+        "UnauthRoleArn": {
+            "Type": "String"
+        },
+        "env": {
+            "Type": "String"
+        }
+    },
+    "Conditions": {
+        "ShouldNotCreateEnvResources": {
+            "Fn::Equals": [
+                {
+                    "Ref": "env"
+                },
+                "NONE"
+            ]
+        }
+    },
+    "Resources": {
+    
+        "remotebrillGroup": {
+          "Type" : "AWS::Cognito::UserPoolGroup",
+          "Properties" : {
+              "GroupName" : "remotebrill",
+              "Precedence" : 1,
+              
+              "UserPoolId" : {
+                "Ref": "authremotebrillUserPoolId"
+              }
+            }
+        },
+        
+    
+    
+    },
+    
+}

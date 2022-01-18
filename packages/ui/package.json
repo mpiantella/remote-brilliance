@@ -1,0 +1,67 @@
+{
+	"name": "vuetify-dashboard",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"serve": "vue-cli-service serve",
+		"build": "vue-cli-service build --silent",
+		"lint": "vue-cli-service lint",
+		"s3:deploy": "aws s3 cp dist s3://www.remotebrilliance.link --recursive",
+		"deploy": "npm run build && npm run s3:deploy"
+	},
+	"dependencies": {
+		"@aws-amplify/ui-vue": "^1.1.15",
+		"@vuelidate/core": "^2.0.0-alpha.32",
+		"@vuelidate/validators": "^2.0.0-alpha.25",
+		"aws-amplify": "^4.3.3",
+		"aws-amplify-vue": "^2.1.5",
+		"aws-appsync": "^4.1.4",
+		"core-js": "^2.6.5",
+		"graphql-tag": "^2.12.5",
+		"vue": "^2.6.10",
+		"vue-apollo": "^3.0.8",
+		"vue-router": "^3.0.3",
+		"vue2-editor": "^2.10.3",
+		"vuelidate": "^0.7.6",
+		"vuetify": "^2.0.0",
+		"vuex": "^3.6.2"
+	},
+	"devDependencies": {
+		"@vue/cli-plugin-babel": "^3.9.0",
+		"@vue/cli-plugin-eslint": "^3.9.0",
+		"@vue/cli-service": "^3.9.0",
+		"babel-eslint": "^10.0.1",
+		"eslint": "^5.16.0",
+		"eslint-plugin-vue": "^5.0.0",
+		"sass": "1.32.13",
+		"sass-loader": "^7.1.0",
+		"stylus": "^0.54.5",
+		"stylus-loader": "^3.0.1",
+		"vue-cli-plugin-vuetify": "^0.6.1",
+		"vue-template-compiler": "^2.6.10",
+		"vuetify-loader": "^1.2.2"
+	},
+	"eslintConfig": {
+		"root": true,
+		"env": {
+			"node": true
+		},
+		"extends": [
+			"plugin:vue/essential",
+			"eslint:recommended"
+		],
+		"rules": {},
+		"parserOptions": {
+			"parser": "babel-eslint"
+		}
+	},
+	"postcss": {
+		"plugins": {
+			"autoprefixer": {}
+		}
+	},
+	"browserslist": [
+		"> 1%",
+		"last 2 versions"
+	]
+}

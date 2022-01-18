@@ -1,0 +1,32 @@
+type Query {
+  # activity
+  getActivity(id: ID!): Activity
+  listActivities(
+    filter: TableActivityFilterInput
+    limit: Int
+    nextToken: String
+  ): ActivityConnection
+
+  # job
+  getJob(id: ID!): Job
+  listJobs(
+    filter: TableJobFilterInput
+    limit: Int
+    nextToken: String
+  ): JobConnection
+
+  # user
+  getUser(id: ID!): User
+  listUsers(
+    filter: TableUserFilterInput
+    limit: Int
+    nextToken: String
+  ): UserConnection
+
+  # subscriptions
+  # listSubscriptions(
+  #   filter: TableSubscriptionsFilterInput
+  #   limit: Int
+  #   nextToken: String
+  # ): SubscriptionConnection
+}

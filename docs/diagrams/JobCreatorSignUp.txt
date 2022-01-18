@@ -1,0 +1,36 @@
+// title Job Creator Sign Up
+
+
+actor JobCreator
+
+JobCreator->Sign-Up: First Time User
+activate Sign-Up
+Sign-Up->LinkedIn: Register User
+
+activate LinkedIn
+Sign-Up<--LinkedIn: Success
+deactivate LinkedIn
+
+break Error
+Sign-Up->Sign-Up: Failure
+Sign-Up-->JobCreator: Login Failed - display error
+end Error
+
+Sign-Up->CompanyInfo: Success
+deactivate Sign-Up
+
+CompanyInfo->CreateJob:
+CreateJob->Review:
+
+activate Payment
+Review->Payment:
+break Error
+Payment->Payment: Failure
+Payment-->JobCreator: display Error 
+end
+Payment->Publish: Success
+deactivateafter Payment
+
+boundary CompanyProfile
+Publish-> CompanyProfile: Landing
+

@@ -1,0 +1,499 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Remote-Brilliance-Tiffin
+
+Parameters:
+  ApiName:
+    Type: String
+    Default: Remote-Brilliance
+  AppSyncRole:
+    Type: String
+    Default: arn:aws:iam::762379509945:role/service-role/appsync-ds-ddb-dlathc-RemoteBrillianceTabl
+  AppSyncPushToCloudWatchLogs:
+    Type: String
+    Default: arn:aws:iam::762379509945:role/AppSyncPushToCloudWatchLogs
+  LambdaDDBAndCWRole:
+    Type: String
+    Default: arn:aws:iam::762379509945:role/LambdaDDBAndCW
+  RBS3Bucket:
+    Type: String
+    Default: remote-brilliance-cloud
+  EnableDynamoDBTableEncryption:
+    Type: String
+    Description: This is used to specify if the DynamoDB tables should be encrypted.
+    Default: true
+    AllowedValues: [true, false]
+  CognitoUserPoolId:
+    Type: String
+    Default: us-east-1_zFDe35WRr
+  dynamoDBTableBillingMode:
+    Type: String
+    Description: This is used to configure the billing mode on the DynamoDB tables.
+    Default: PAY_PER_REQUEST
+
+Resources:
+  # Lambda
+  UpdateActivityFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: UpdateActivityLambdaDataSource
+      Handler: updateActivityFunction.handler
+      Environment:
+        Variables:
+          ACTIVITY_TABLE_NAME: !Ref Activity
+      Role: !Sub ${LambdaDDBAndCWRole}
+      Code:
+        S3Bucket: !Sub ${RBS3Bucket}
+        S3Key: updateActivityFunction.zip
+      Runtime: nodejs14.x
+      Timeout: 40
+      TracingConfig:
+        Mode: Active
+
+  UpdateJobFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: UpdateJobLambdaDataSource
+      Handler: updateJobFunction.handler
+      Environment:
+        Variables:
+          JOB_TABLE_NAME: !Ref Job
+      Role: !Sub ${LambdaDDBAndCWRole}
+      Code:
+        S3Bucket: !Sub ${RBS3Bucket}
+        S3Key: updateJobFunction.zip
+      Runtime: nodejs14.x
+      Timeout: 30
+      TracingConfig:
+        Mode: Active
+
+  InsertUserAfterRegistration:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: InsertUserAfterRegistration
+      Handler: InsertUserAfterRegistration.handler
+      Environment:
+        Variables:
+          USER_TABLE_NAME: !Ref User
+      Role: !Sub ${LambdaDDBAndCWRole}
+      Code:
+        S3Bucket: !Sub ${RBS3Bucket}
+        S3Key: InsertUserAfterRegistration.zip
+      Runtime: nodejs14.x
+      Timeout: 30
+      TracingConfig:
+        Mode: Active
+
+  UpdateUserFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: UpdateUserLambdaDataSource
+      Handler: updateUserFunction.handler
+      Environment:
+        Variables:
+          USER_TABLE_NAME: !Ref User
+      Role: !Sub ${LambdaDDBAndCWRole}
+      Code:
+        S3Bucket: !Sub ${RBS3Bucket}
+        S3Key: updateUserFunction.zip
+      Runtime: nodejs14.x
+      Timeout: 30
+      TracingConfig:
+        Mode: Active
+  # Data Source Resources
+  Activity:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      SSESpecification:
+        SSEEnabled: { "Ref": "EnableDynamoDBTableEncryption" }
+
+  Job:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      SSESpecification:
+        SSEEnabled: { "Ref": "EnableDynamoDBTableEncryption" }
+
+  User:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      SSESpecification:
+        SSEEnabled: { "Ref": "EnableDynamoDBTableEncryption" }
+
+  # AppSync API
+  AppSyncApiKey:
+    Type: AWS::AppSync::ApiKey
+    Properties:
+      Description: "Basic API Key"
+      Expires: 1640995200 # Jan 24 2022
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+
+  RemoteBrillianceAppSync:
+    Type: AWS::AppSync::GraphQLApi
+    Description: "Remote Brilliance Endpoints"
+    Properties:
+      Name: !Sub ${ApiName}
+      AuthenticationType: "API_KEY"
+      # AuthenticationType: "AMAZON_COGNITO_USER_POOLS"
+      # UserPoolConfig:
+      #   UserPoolId: !Ref UserPoolClient
+      #   AwsRegion: !Sub ${AWS::Region}
+      #   DefaultAction: "ALLOW"
+      LogConfig:
+        CloudWatchLogsRoleArn: !Sub ${AppSyncPushToCloudWatchLogs}
+        ExcludeVerboseContent: False
+        FieldLogLevel: ALL
+
+  RemoteBrillianceSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      DefinitionS3Location: !Sub "s3://${RBS3Bucket}/schema.graphql"
+
+  # Data Sources Association
+  ActivityDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: "ActivityDataSource"
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      DynamoDBConfig:
+        TableName: !Ref Activity
+        AwsRegion: !Ref "AWS::Region"
+      ServiceRoleArn: !Sub ${AppSyncRole}
+      Type: AMAZON_DYNAMODB
+
+  UpdateActivityLambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      Name: "UpdateActivityLambdaDataSource"
+      ServiceRoleArn: !Sub ${LambdaDDBAndCWRole}
+      Type: AWS_LAMBDA
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt UpdateActivityFunction.Arn
+
+  JobDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: "JobDataSource"
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      DynamoDBConfig:
+        TableName: !Ref Job
+        AwsRegion: !Ref "AWS::Region"
+      ServiceRoleArn: !Sub ${AppSyncRole}
+      Type: AMAZON_DYNAMODB
+
+  UpdateJobLambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      Name: "UpdateJobLambdaDataSource"
+      ServiceRoleArn: !Sub ${LambdaDDBAndCWRole}
+      Type: AWS_LAMBDA
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt UpdateJobFunction.Arn
+
+  UserDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: "UserDataSource"
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      DynamoDBConfig:
+        TableName: !Ref User
+        AwsRegion: !Ref "AWS::Region"
+      ServiceRoleArn: !Sub ${AppSyncRole}
+      Type: AMAZON_DYNAMODB
+
+  UpdateUserLambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      Name: "UpdateUserLambdaDataSource"
+      ServiceRoleArn: !Sub ${LambdaDDBAndCWRole}
+      Type: AWS_LAMBDA
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt UpdateUserFunction.Arn
+
+  # AppSync Resolver
+  # Activity
+  AppSyncResolverCreateActivity:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Mutation
+      FieldName: createActivity
+      DataSourceName: !GetAtt ActivityDataSource.Name
+      RequestMappingTemplate: |
+        {
+            "version" : "2017-02-28",
+            "operation" : "PutItem",
+            "key" : {
+                "id": $util.dynamodb.toDynamoDBJson($util.autoId()),
+            },
+            "attributeValues" : $util.dynamodb.toMapValuesJson(${context.arguments.input})
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+
+  # this might be better in a lambda
+  AppSyncResolverUpdateActivity:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Mutation
+      FieldName: updateActivity
+      DataSourceName: !GetAtt UpdateActivityLambdaDataSource.Name
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+
+  AppSyncResolverDeleteActivity:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Mutation
+      FieldName: deleteActivity
+      DataSourceName: !GetAtt ActivityDataSource.Name
+      RequestMappingTemplate: |
+        {
+            "version" : "2017-02-28",
+            "operation" : "DeleteItem",
+            "key" : {
+                "id" : { "S" : "${context.arguments.input.id}" }
+            }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+
+  AppSyncResolverGetActivity:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Query
+      FieldName: getActivity
+      DataSourceName: !GetAtt ActivityDataSource.Name
+      RequestMappingTemplate: |
+        {
+            "version" : "2017-02-28",
+            "operation" : "Query",
+            "query" : {
+                "expression": "id = :id",
+                "expressionValues" : {
+                    ":id" : {
+                        "S" : "${context.arguments.id}"
+                    }
+                }
+            }
+          }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result.items[0])
+
+  AppSyncResolverListActivities:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Query
+      FieldName: listActivities
+      DataSourceName: !GetAtt ActivityDataSource.Name
+      RequestMappingTemplate: |
+        { "version" : "2017-02-28", "operation" : "Scan" }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+
+  # Job
+  AppSyncResolverCreateJob:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Mutation
+      FieldName: createJob
+      DataSourceName: !GetAtt JobDataSource.Name
+      RequestMappingTemplate: |
+        {
+            "version" : "2017-02-28",
+            "operation" : "PutItem",
+            "key" : {
+                "id": $util.dynamodb.toDynamoDBJson($util.autoId()),
+            },
+            "attributeValues" : $util.dynamodb.toMapValuesJson(${context.arguments.input})
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+  # this might be better in a lambda
+  AppSyncResolverUpdateJob:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Mutation
+      FieldName: updateJob
+      DataSourceName: !GetAtt UpdateJobLambdaDataSource.Name
+      ResponseMappingTemplate: |
+        $util.toJson($context.result.items[0])
+
+  AppSyncResolverDeleteJob:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Mutation
+      FieldName: deleteJob
+      DataSourceName: !GetAtt JobDataSource.Name
+      RequestMappingTemplate: |
+        {
+            "version" : "2017-02-28",
+            "operation" : "DeleteItem",
+            "key" : {
+                "id" : { "S" : "${context.arguments.input.id}" }
+            }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+
+  AppSyncResolverGetJob:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Query
+      FieldName: getJob
+      DataSourceName: !GetAtt JobDataSource.Name
+      RequestMappingTemplate: |
+        {
+            "version" : "2017-02-28",
+            "operation" : "Query",
+            "query" : {
+                "expression": "id = :id",
+                "expressionValues" : {
+                    ":id" : {
+                        "S" : "${context.arguments.id}"
+                    }
+                }
+            }
+          }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result.items[0])
+
+  AppSyncResolverListJobs:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Query
+      FieldName: listJobs
+      DataSourceName: !GetAtt JobDataSource.Name
+      RequestMappingTemplate: |
+        { "version" : "2017-02-28", "operation" : "Scan" }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+
+  # User
+  AppSyncResolverCreateUser:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Mutation
+      FieldName: createUser
+      DataSourceName: !GetAtt UserDataSource.Name
+      RequestMappingTemplate: |
+        {
+            "version" : "2017-02-28",
+            "operation" : "PutItem",
+            "key" : {
+                "id": $util.dynamodb.toDynamoDBJson($util.autoId()),
+            },
+            "attributeValues" : $util.dynamodb.toMapValuesJson(${context.arguments.input})
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+  # this might be better in a lambda
+  AppSyncResolverUpdateUser:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Mutation
+      FieldName: updateUser
+      DataSourceName: !GetAtt UpdateUserLambdaDataSource.Name
+      ResponseMappingTemplate: |
+        $util.toJson($context.result.items[0])
+
+  AppSyncResolverDeleteUser:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Mutation
+      FieldName: deleteUser
+      DataSourceName: !GetAtt UserDataSource.Name
+      RequestMappingTemplate: |
+        {
+            "version" : "2017-02-28",
+            "operation" : "DeleteItem",
+            "key" : {
+                "id" : { "S" : "${context.arguments.id}" }
+            }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+
+  AppSyncResolverGetUser:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Query
+      FieldName: getUser
+      DataSourceName: !GetAtt UserDataSource.Name
+      RequestMappingTemplate: |
+        {
+            "version" : "2017-02-28",
+            "operation" : "Query",
+            "query" : {
+                "expression": "id = :id",
+                "expressionValues" : {
+                    ":id" : {
+                        "S" : "${context.arguments.id}"
+                    }
+                }
+            }
+          }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result.items[0])
+
+  AppSyncResolverListUsers:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt RemoteBrillianceAppSync.ApiId
+      TypeName: Query
+      FieldName: listUsers
+      DataSourceName: !GetAtt UserDataSource.Name
+      RequestMappingTemplate: |
+        { "version" : "2017-02-28", "operation" : "Scan" }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+
+Outputs:
+  GraphQLApiEndpoint:
+    Description: The URL to the GraphQL Endpoint
+    Value: !GetAtt RemoteBrillianceAppSync.GraphQLUrl
+  GraphQLApiId:
+    Description: The API ID of the GraphQL API
+    Value: !GetAtt RemoteBrillianceAppSync.ApiId

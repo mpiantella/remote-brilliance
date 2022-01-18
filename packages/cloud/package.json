@@ -1,0 +1,36 @@
+{
+  "name": "remove-brilliance-server",
+  "version": "0.0.1",
+  "description": "Remote Brilliance Cloud Assets With AppSync",
+  "author": "Maria Lucena <mpiantella@hotmail.com>",
+  "homepage": "https://github.com/mpiantella/tiffin-capstone/tree/main/packages/cloud#readme",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mpiantella/tiffin-capstone.git"
+  },
+  "scripts": {
+    "deploy": "npm run deploy:lambdas && npm run cft:schema && npm run cft:deploy",
+    "cft:validate": "./cft/validate-stack.sh",
+    "cft:deploy": "./cft/deploy-cft.sh",
+    "cft:schema": "npm run schema:gen && npm run schema:cp",
+    "schema:gen": "node ./resources/appsync/schema/index.js",
+    "schema:cp": "aws s3 cp resources/appsync/schema.graphql s3://remote-brilliance-cloud",
+    "lambda:zip:activity": "cd resources/lambda && zip updateActivityFunction.zip updateActivityFunction.js",
+    "lambda:cp:activity": "aws s3 cp resources/lambda/updateActivityFunction.zip s3://remote-brilliance-cloud",
+    "deploy:lambda:activity": "npm run lambda:zip:activity && npm run lambda:cp:activity",
+    "lambda:zip:job": "cd resources/lambda && zip updateJobFunction.zip updateJobFunction.js",
+    "lambda:cp:job": "aws s3 cp resources/lambda/updateJobFunction.zip s3://remote-brilliance-cloud",
+    "deploy:lambda:job": "npm run lambda:zip:job && npm run lambda:cp:job",
+    "lambda:zip:user": "cd resources/lambda && zip updateUserFunction.zip updateUserFunction.js",
+    "lambda:cp:user": "aws s3 cp resources/lambda/updateUserFunction.zip s3://remote-brilliance-cloud",
+    "deploy:lambda:user": "npm run lambda:zip:user && npm run lambda:cp:user",
+    "lambda:zip:insertUser": "cd resources/lambda && zip InsertUserAfterRegistration.zip InsertUserAfterRegistration.js",
+    "lambda:cp:insertUser": "aws s3 cp resources/lambda/InsertUserAfterRegistration.zip s3://remote-brilliance-cloud",
+    "deploy:lambda:insertUser": "npm run lambda:zip:insertUser && npm run lambda:cp:insertUser",
+    "deploy:lambdas": "npm run deploy:lambda:activity && npm run deploy:lambda:job && npm run deploy:lambda:user && npm run deploy:lambda:insertUser"
+  },
+  "bugs": {
+    "url": "https://github.com/mpiantella/tiffin-capstone/issues"
+  }
+}

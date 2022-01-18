@@ -1,0 +1,18 @@
+// title Job Creator Edit Job
+
+actor JobCreator
+
+JobCreator->ViewJob: 
+activate EditJob
+EditJob->Review: 
+deactivate EditJob
+
+activate Review
+ViewJob<--Review: Save/Cancel
+break Error
+Review->Review: Failure
+Review-->ViewJob: Cancel - Display error
+end Error
+
+deactivate Review
+

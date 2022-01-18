@@ -1,0 +1,25 @@
+// title Job Seeker Sign Up
+
+actor JobSeeker
+
+JobSeeker->Sign-Up: First Time User
+activate Sign-Up
+Sign-Up->LinkedIn: Register User
+
+activate LinkedIn
+Sign-Up<--LinkedIn: Success
+deactivate LinkedIn
+
+break Error
+Sign-Up->Sign-Up: Failure
+Sign-Up-->JobSeeker: Login Failed - display error
+end Error
+
+Sign-Up->UserInfo:
+deactivate Sign-Up
+UserInfo->UploadResume: (Optional)
+UploadResume->JobInfo: (Optional)
+JobInfo->VerifyPublish:
+
+boundary UserProfile
+VerifyPublish-> UserProfile:

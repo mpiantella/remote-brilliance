@@ -1,0 +1,70 @@
+type Subscription {
+  # activity
+  onCreateActivity(
+    description: String
+    id: ID
+    name: String
+    status: String
+    userId: String
+  ): Activity @aws_subscribe(mutations: ["createActivity"])
+  onDeleteActivity(
+    description: String
+    id: ID
+    name: String
+    status: String
+    userId: String
+  ): Activity @aws_subscribe(mutations: ["deleteActivity"])
+  onUpdateActivity(
+    description: String
+    id: ID
+    name: String
+    status: String
+    userId: String
+  ): Activity @aws_subscribe(mutations: ["updateActivity"])
+
+  # job
+  onCreateJob(
+    category: String
+    id: ID
+    title: String
+    type: String
+    userId: String
+  ): Job @aws_subscribe(mutations: ["createJob"])
+  onDeleteJob(
+    category: String
+    id: ID
+    title: String
+    type: String
+    userId: String
+  ): Job @aws_subscribe(mutations: ["deleteJob"])
+  onUpdateJob(
+    category: String
+    id: ID
+    title: String
+    type: String
+    userId: String
+  ): Job @aws_subscribe(mutations: ["updateJob"])
+
+  # user
+  onCreateUser(
+    address: String
+    cognitoid: ID
+    email: String
+    id: ID
+    username: String
+  ): User @aws_subscribe(mutations: ["createUser"])
+  onDeleteUser(
+    address: String
+    cognitoid: ID
+    email: String
+    id: ID
+    username: String
+  ): User @aws_subscribe(mutations: ["deleteUser"])
+  onUpdateUser(
+    address: String
+    cognitoid: ID
+    email: String
+    id: ID
+    username: String
+  ): User @aws_subscribe(mutations: ["updateUser"])
+}

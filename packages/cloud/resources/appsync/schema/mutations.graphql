@@ -1,0 +1,16 @@
+type Mutation {
+  # activity
+  createActivity(input: CreateActivityInput!): Activity
+  updateActivity(input: UpdateActivityInput!): Activity
+  deleteActivity(input: DeleteActivityInput!): Activity
+  
+  # job
+  createJob(input: CreateJobInput!): Job
+  deleteJob(input: DeleteJobInput!): Job
+  updateJob(input: UpdateJobInput!): Job
+  
+  # user
+  createUser(input: CreateUserInput!): User
+  deleteUser(input: DeleteUserInput!): User
+  updateUser(input: UpdateUserInput!): User
+}
