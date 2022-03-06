@@ -1,13 +1,12 @@
 # tiffin-capstone
-Research in Computer Science Capstone project for Tiffin University 
+This is a simple application that uses a combination of modern tools, to create a enterprise ready application. 
 
 ## Structure
 ```
-- packages
-    - ui
-        - VueApp and Amplify definitons
-    - cloud
-        - AWS Resource Definition and CFT
+- ui
+    - VueApp and Amplify definitons
+- cloud
+    - AWS Resource Definition and CFT
 ```
 
 ## UI

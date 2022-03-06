@@ -7,13 +7,13 @@ Parameters:
     Default: Remote-Brilliance
   AppSyncRole:
     Type: String
-    Default: arn:aws:iam::762379509945:role/service-role/appsync-ds-ddb-dlathc-RemoteBrillianceTabl
+    Default: arn:aws:iam::AWS_ACCOUNT:role/service-role/appsync-ds-ddb-dlathc-RemoteBrillianceTabl
   AppSyncPushToCloudWatchLogs:
     Type: String
-    Default: arn:aws:iam::762379509945:role/AppSyncPushToCloudWatchLogs
+    Default: arn:aws:iam::AWS_ACCOUNT:role/AppSyncPushToCloudWatchLogs
   LambdaDDBAndCWRole:
     Type: String
-    Default: arn:aws:iam::762379509945:role/LambdaDDBAndCW
+    Default: arn:aws:iam::AWS_ACCOUNT:role/LambdaDDBAndCW
   RBS3Bucket:
     Type: String
     Default: remote-brilliance-cloud
@@ -24,7 +24,7 @@ Parameters:
     AllowedValues: [true, false]
   CognitoUserPoolId:
     Type: String
-    Default: us-east-1_zFDe35WRr
+    Default: us-east-1_UUID_ASSIGNED
   dynamoDBTableBillingMode:
     Type: String
     Description: This is used to configure the billing mode on the DynamoDB tables.
