@@ -11,9 +11,21 @@ This is a simple application that uses a combination of modern tools, to create 
 
 ## UI
 
-Vue Application using AppSync for GraphQL backend. Some of the data sources include DynamoDb tables with Lambdas for some resolvers.
+Vue Application using AppSync for GraphQL backend. Some of the data sources include DynamoDb tables with Lambdas for some resolvers. All of the commands related to starting, building and linting are in turn calling the vue-cli
+
+```
+...
+/ui/package.json - scripts
+"serve": "vue-cli-service serve",
+"build": "vue-cli-service build --silent",
+"lint": "vue-cli-service lint",
+...
+```
+
 
 ### Deploy
+
+You will need your AWS API keys configured in your environment in order to deploy or execute any of the Amplify commands. 
 
 ```
     npm run deploy
